@@ -14,7 +14,8 @@ Setup InfluxDBv2, create bucket and create a token with write permissions for bu
 ## Docker Setup
 ```
 $ docker run -d \
- -e NUKI_API_KEY="<apikey>" \
+ -e NUKI_BRIDGE="<IP>" \
+ -e NUKI_TOKEN="<apikey>" \
  -e NUKI_OPENER_LIST="['',['<id>',...]" \
  -e NUKI_LOCK_LIST="['',['<id>',...]" \
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
