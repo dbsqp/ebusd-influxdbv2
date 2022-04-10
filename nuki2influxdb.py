@@ -9,7 +9,6 @@ import json
 import os
 import sys
 import requests
-from getmac import get_mac_address
 import subprocess
 import platform
 
@@ -31,15 +30,8 @@ if debug_str is not None:
 else:
 	debug = False
 
-# getmac enviroment variables
-getmac_str=os.getenv("GETMAC", None)
-if getmac_str is not None:
-	getmac = getmac_str.lower() == "true"
-else:
-	getmac = False
 
-
-# HomeKit envionment variables
+# Nuki envionment variables
 homekit_ip_list_str=os.getenv('HOMEKIT_IP_LIST', "")
 homekit_sensorName_list_str=os.getenv('HOMEKIT_SENSOR_LIST', "")
 homekit_mac_list_str=os.getenv('HOMEKIT_MAC_LIST', "")
@@ -62,17 +54,11 @@ influxdb2_bucket=os.getenv('INFLUXDB2_BUCKET', "DEV")
 # hard encoded envionment varables
 
 
-# report debug/domac status
+# report debug status
 if debug:
 	print ( " debug: TRUE" )
 else:
 	print ( " debug: FALSE" )
-
-if getmac:
-	print ( "getmac: TRUE" )
-else:
-	print ( "getmac: FALSE" )
-
 
 # influxDBv2
 influxdb2_url="http://" + influxdb2_host + ":" + str(influxdb2_port)
