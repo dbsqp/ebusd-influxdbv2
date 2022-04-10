@@ -2,7 +2,10 @@
 Fetch data from Nuki bridge via API and push to influxdb v2 bucket.
 
 ## Nuki Accessories
-- Create list of IPs: ['IP1','IP2', ...]
+- Enable API on Nuki Bridge
+- Get API key
+- Create list of opener ids: ['ID1','ID2', ...]
+- Create list of lock ids: ['ID1','ID2', ...]
 
 
 ## InfluxDBv2 Setup
@@ -11,6 +14,7 @@ Setup InfluxDBv2, create bucket and create a token with write permissions for bu
 ## Docker Setup
 ```
 $ docker run -d \
+ -e NUKI_API_KEY="<apikey>" \
  -e NUKI_OPENER_LIST="['',['<id>',...]" \
  -e NUKI_LOCK_LIST="['',['<id>',...]" \
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
