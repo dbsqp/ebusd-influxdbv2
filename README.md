@@ -3,7 +3,7 @@ Fetch data from Nuki bridge via API and push to influxdb v2 bucket.
 
 ## Nuki Accessories
 - Enable API on Nuki Bridge
-- Get API key
+- Get API token
 - Create list of opener ids: ['ID1','ID2', ...]
 - Create list of lock ids: ['ID1','ID2', ...]
 
