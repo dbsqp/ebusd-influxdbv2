@@ -4,9 +4,9 @@ Fetch data from Nuki bridge via API and push to influxdb v2 bucket.
 ## Nuki Accessories
 - Enable API on Nuki Bridge
 - Get API token
+- Create ids from http://<bridge_ip>:8080/list&token=<token>
 - Create list of opener ids: ['ID1','ID2', ...]
 - Create list of lock ids: ['ID1','ID2', ...]
-
 
 ## InfluxDBv2 Setup
 Setup InfluxDBv2, create bucket and create a token with write permissions for bucket.
