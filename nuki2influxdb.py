@@ -34,11 +34,6 @@ else:
 # Nuki envionment variables
 nuki_bridge=os.getenv('NUKI_BRIDGE', "")
 nuki_token=os.getenv('NUKI_TOKEN', "")
-nuki_opener_list_str=os.getenv('NUKI_OPENER_LIST', "")
-nuki_lock_list_str=os.getenv('NUKI_LOCK_LIST', "")
-
-nuki_opener_list=eval(nuki_opener_list_str)
-nuki_lock_list=eval(nuki_lock_list_str)
 
 # influxDBv2 envionment variables
 influxdb2_host=os.getenv('INFLUXDB2_HOST', "localhost")
@@ -47,9 +42,7 @@ influxdb2_org=os.getenv('INFLUXDB2_ORG', "Home")
 influxdb2_token=os.getenv('INFLUXDB2_TOKEN', "token")
 influxdb2_bucket=os.getenv('INFLUXDB2_BUCKET', "DEV")
 
-
-# hard encoded envionment varables
-
+# hard encoded envionment varables for testing
 
 # report debug status
 if debug:
@@ -66,8 +59,7 @@ if debug:
 client = InfluxDBClient(url=influxdb2_url, token=influxdb2_token, org=influxdb2_org)
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
-# pass data to InfluxDB
-
+# set date
 time = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ") 
 
 # test if bridge responde to ping
@@ -77,48 +69,127 @@ if pingTest(nuki_bridge):
 else:
 	if debug:
 		print ("  PING: NOK")
-continue
+#	continue
 
-# get REST API
+# get API
 url="http://"+nuki_bridge+":8080/list&token="+nuki_token
 try:
 	raw = requests.get(url, timeout=4)
 except requests.exceptions.Timeout as e: 
 	if debug:
 		print ("   API:",e)
-	continue
+#	continue
 
 if raw.status_code == requests.codes.ok:
 	if debug:
 		print ("   API: OK ["+str(raw.status_code)+"]")
-	ds = raw.json()
+	dsList = raw.json()
 	if debug and showraw:
 		print ("   RAW:")
-		print (json.dumps(ds,indent=4))
+		print (json.dumps(dsList,indent=4))
 else:
 	if debug:
 		print ("   API: NOK")
-	continue
+#	continue
 
+url="http://"+nuki_bridge+":8080/info&token="+nuki_token
+try:
+	raw = requests.get(url, timeout=4)
+except requests.exceptions.Timeout as e:
+	if debug:
+		print ("   API:",e)
+#	continue
+
+if raw.status_code == requests.codes.ok:
+	if debug:
+		print ("   API: OK ["+str(raw.status_code)+"]")
+	dsInfo = raw.json()
+	if debug and showraw:
+		print ("   RAW:")
+		print (json.dumps(dsInfo,indent=4))
+else:
+	if debug:
+		print ("   API: NOK")
+#	continue
 
        
-# get sensor values
-senddata={}
+# pass info
+for key in dsList:
+	name=key['name']
+	nukiID=key['nukiId']
+	state=key['lastKnownState']['stateName']
 
-value=ds['accessories'][1]['services'][sensor+1]['characteristics'][0]['value']
-value=float(round(value,1))
-        	
-senddata["measurement"]="battery"
-senddata["tags"]={}
-senddata["tags"]["origin"]="Nuki"
-senddata["tags"]["source"]="docker nuki-influxdb2"
-senddata["tags"]["host"]="Opener"
-senddata["fields"]={}
-senddata["fields"]["percent"]=value
-		
-if debug:
-	print ("INFLUX: "+influxdb2_bucket)
-	print (json.dumps(senddata,indent=4))
-write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+	senddata={}
+	senddata["measurement"]="lock"
+	senddata["tags"]={}
+	senddata["tags"]["origin"]="Nuki"
+	senddata["tags"]["source"]="docker nuki-influxdb2"
+	senddata["tags"]["host"]=name
+	senddata["fields"]={}
+	senddata["fields"]["state"]=state
+
+	if debug:
+		print ("INFLUX: "+influxdb2_bucket)
+		print (json.dumps(senddata,indent=4))
+		write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+
+	if key['lastKnownState']['batteryCritical'] == "true":		battery=10
+	else:
+		battery=100
+	battery=float(round(battery,1))
 
 
+	senddata={}
+	senddata["measurement"]="battery"
+	senddata["tags"]={}
+	senddata["tags"]["origin"]="Nuki"
+	senddata["tags"]["source"]="docker nuki-influxdb2"
+	senddata["tags"]["host"]=name
+	senddata["tags"]["type"]="critical"
+	senddata["fields"]={}
+	senddata["fields"]["percent"]=battery
+
+	if debug:
+		print ("INFLUX: "+influxdb2_bucket)
+		print (json.dumps(senddata,indent=4))
+		write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+
+
+	if 'batteryChargeState' in key['lastKnownState']:
+		battery=key['lastKnownState']['batteryChargeState']
+		battery=float(round(battery,1))
+
+		senddata={}
+		senddata["measurement"]="battery"
+		senddata["tags"]={}
+		senddata["tags"]["origin"]="Nuki"
+		senddata["tags"]["source"]="docker nuki-influxdb2"
+		senddata["tags"]["host"]=name
+		senddata["tags"]["type"]="charge"
+		senddata["fields"]={}
+		senddata["fields"]["percent"]=battery
+
+		if debug:
+			print ("INFLUX: "+influxdb2_bucket)
+			print (json.dumps(senddata,indent=4))
+			write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+
+	for key2 in dsInfo['scanResults']:
+		if key2['nukiId'] == nukiID:
+			rssi=key2['rssi']
+			signal=( rssi + 100 )*2.0
+
+	senddata={}
+	senddata["measurement"]="signal"
+	senddata["tags"]={}
+	senddata["tags"]["origin"]="Nuki"
+	senddata["tags"]["source"]="docker nuki-influxdb2"
+	senddata["tags"]["host"]=name
+	senddata["fields"]={}
+	senddata["fields"]["percent"]=signal
+	senddata["fields"]["rssi"]=rssi
+
+	if debug:
+		print ("INFLUX: "+influxdb2_bucket)
+		print (json.dumps(senddata,indent=4))
+		write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
