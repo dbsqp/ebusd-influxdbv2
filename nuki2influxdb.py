@@ -131,7 +131,7 @@ for key in dsList:
 	if debug:
 		print ("INFLUX: "+influxdb2_bucket)
 		print (json.dumps(senddata,indent=4))
-		write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+	write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
 
 	if key['lastKnownState']['batteryCritical'] == "true":		battery=10
 	else:
@@ -152,7 +152,7 @@ for key in dsList:
 	if debug:
 		print ("INFLUX: "+influxdb2_bucket)
 		print (json.dumps(senddata,indent=4))
-		write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+	write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
 
 
 	if 'batteryChargeState' in key['lastKnownState']:
@@ -172,7 +172,7 @@ for key in dsList:
 		if debug:
 			print ("INFLUX: "+influxdb2_bucket)
 			print (json.dumps(senddata,indent=4))
-			write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+		write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
 
 	for key2 in dsInfo['scanResults']:
 		if key2['nukiId'] == nukiID:
@@ -192,4 +192,4 @@ for key in dsList:
 	if debug:
 		print ("INFLUX: "+influxdb2_bucket)
 		print (json.dumps(senddata,indent=4))
-		write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
+	write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
