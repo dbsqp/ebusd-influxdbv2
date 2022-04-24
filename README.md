@@ -4,8 +4,9 @@ https://developer.nuki.io/page/nuki-web-api-1-4/3
 
 ## Nuki Accessories
 1. Go to https://web.nuki.io/#/pages/smartlocks
-2. Generate API Token
-- Scope: View devices, View activity logs
+2. Generate API Token with scope:
+- View devices
+- View activity logs
 3. get API token
 
 ## InfluxDBv2 Setup
