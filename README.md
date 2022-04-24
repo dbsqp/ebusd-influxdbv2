@@ -1,5 +1,5 @@
 # nuki-influxdbv2
-Docker image to fetch data from Nuki bridge via API and push to influxdb v2 bucket.
+Docker image to fetch data from Nuki Web API and push to influxdb v2 bucket.
 
 ## Nuki Accessories
 - Enable API on Nuki Bridge
@@ -12,8 +12,7 @@ Setup InfluxDBv2, create bucket and create a token with write permissions for bu
 https://hub.docker.com/repository/docker/dbsqp/nuki-influxdbv2
 ```
 $ docker run -d \
- -e NUKI_BRIDGE="<IP>" \
- -e NUKI_TOKEN="<apikey>" \
+ -e NUKI_API_TOKEN="<IP>" \
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
  -e INFLUXDB2_PORT="8086" \
  -e INFLUXDB2_ORG="Home" \
