@@ -3,10 +3,10 @@ Docker image to fetch data from Nuki Web API and push to influxdb v2 bucket.
 https://developer.nuki.io/page/nuki-web-api-1-4/3
 
 ## Nuki Accessories
-- Go to https://web.nuki.io/#/pages/smartlocks
-- Generate API Token
--- Scope: View devices, View activity logs
-- get API token
+1. Go to https://web.nuki.io/#/pages/smartlocks
+2. Generate API Token
+- Scope: View devices, View activity logs
+3. get API token
 
 ## InfluxDBv2 Setup
 Setup InfluxDBv2, create bucket and create a token with write permissions for bucket.
