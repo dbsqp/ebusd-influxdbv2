@@ -12,16 +12,6 @@ import requests
 import subprocess
 import platform
 
-
-# function ping test
-def pingTest(pingHost):
-	try:
-		output = subprocess.check_output("ping -{} 1 {}".format('n' if platform.system().lower()=="windows" else 'c', pingHost), shell=True)#    except Exception as e:
-	except Exception as e:
-		return False
-	return True
-
-
 # debug enviroment variables
 showraw = False
 debug_str=os.getenv("DEBUG", None)
@@ -32,8 +22,7 @@ else:
 
 
 # Nuki envionment variables
-nuki_bridge=os.getenv('NUKI_BRIDGE', "")
-nuki_token=os.getenv('NUKI_TOKEN', "")
+nuki_api_token=os.getenv('NUKI_API_TOKEN', "")
 
 # influxDBv2 envionment variables
 influxdb2_host=os.getenv('INFLUXDB2_HOST', "localhost")
@@ -62,19 +51,19 @@ write_api = client.write_api(write_options=SYNCHRONOUS)
 # set date
 time = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ") 
 
-# test if bridge responde to ping
-if pingTest(nuki_bridge):
-	if debug:
-		print ("  PING: OK")
-else:
-	if debug:
-		print ("  PING: NOK")
-#	continue
+
 
 # get API
-url="http://"+nuki_bridge+":8080/list&token="+nuki_token
+baseURL="https://api.nuki.io"
+
+pathURL="smartlock"
+url=baseURL,"/",pathURL
+
+
+
+
 try:
-	raw = requests.get(url, timeout=4)
+	devJ = requests.get(url, timeout=4)
 except requests.exceptions.Timeout as e: 
 	if debug:
 		print ("   API:",e)
@@ -92,7 +81,18 @@ else:
 		print ("   API: NOK")
 #	continue
 
-url="http://"+nuki_bridge+":8080/info&token="+nuki_token
+
+
+
+
+pathURL="smartlock/log"
+url=baseURL,"/",pathURL
+
+
+
+
+
+
 try:
 	raw = requests.get(url, timeout=4)
 except requests.exceptions.Timeout as e:
@@ -112,7 +112,14 @@ else:
 		print ("   API: NOK")
 #	continue
 
+pathURL="smartlock"
+
        
+	
+	
+	
+	
+	
 # pass info
 for key in dsList:
 	name=key['name']
