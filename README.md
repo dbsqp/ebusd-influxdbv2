@@ -16,7 +16,7 @@ Setup InfluxDBv2, create bucket and create a token with write permissions for bu
 https://hub.docker.com/repository/docker/dbsqp/nuki-influxdbv2
 ```
 $ docker run -d \
- -e NUKI_API_TOKEN="<IP>" \
+ -e NUKI_API_TOKEN="<token>" \
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
  -e INFLUXDB2_PORT="8086" \
  -e INFLUXDB2_ORG="Home" \
