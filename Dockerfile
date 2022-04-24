@@ -25,7 +25,7 @@ ENV PYTHONIOENCODING=utf-8
 
 # Copy files
 ADD nuki2influxdb.py /
-ADD enterypoint.sh /
+ADD entrypoint.sh /
 
 # Run
-CMD ["/bin/bash","/enterypoint.sh"]
+CMD ["/bin/bash","/entrypoint.sh"]
