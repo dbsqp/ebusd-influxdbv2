@@ -4,7 +4,7 @@ while :
 do
   date
   echo "Start Loop"
-  python3 nuki2influxdb.py
+  python3 ebusd2influxdb.py
   RET=$?
   if [ ${RET} -ne 0 ];
   then
@@ -13,6 +13,6 @@ do
     sleep 300
   fi
   date
-  echo "Sleep 30 mins"
-  sleep 1800
+  echo "Sleep 10 mins"
+  sleep 600
 done
