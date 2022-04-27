@@ -26,6 +26,7 @@ https://hub.docker.com/repository/docker/dbsqp/ebusd-influxdbv2
 $ docker run -d \
  -e EBUSD_IP="<eBUSd server>" \
  -e EBUSD_PORT="<port>" \
+ -e EBUSD_CIRCUIT="<circuit>" \
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
  -e INFLUXDB2_PORT="8086" \
  -e INFLUXDB2_ORG="Home" \
