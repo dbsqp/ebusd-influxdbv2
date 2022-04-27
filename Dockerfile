@@ -24,7 +24,7 @@ RUN pip3 install pytz influxdb-client requests
 ENV PYTHONIOENCODING=utf-8
 
 # Copy files
-ADD nuki2influxdb.py /
+ADD ebusd2influxdb.py /
 ADD entrypoint.sh /
 
 # Run
