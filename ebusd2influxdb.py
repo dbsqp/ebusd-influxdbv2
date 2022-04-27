@@ -32,9 +32,9 @@ else:
 
 
 # Nuki envionment variables
-nuki_api_token=os.getenv('NUKI_WEB_API_TOKEN', "")
-nuki_bridge_ip=os.getenv('NUKI_BRIDGE_IP', "")
-nuki_bridge_token=os.getenv('NUKI_BRIDGE_TOKEN', "")
+ebusd_host=os.getenv('EBUSD_HOST', "localhost")
+ebusd_port=os.getenv('EBUSD_PORT', "")
+ebusd_circuit=os.getenv('EBUSD_CIRCUIT', "")
 
 # influxDBv2 envionment variables
 influxdb2_host=os.getenv('INFLUXDB2_HOST', "localhost")
@@ -71,73 +71,61 @@ def write_influxdb():
         print (json.dumps(senddata,indent=4))
     write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
 
-
+    
+# test if up
+if pingTest(ebusd_host):
+    print ("ping OK")
+else:
+    print ("ping NOK")
+    quit(1)
 
 # get eBUSd JSON via HTTP interface
-if nukiBridge:
-    url="http://"+nuki_bridge_ip+":8080/list&token="+nuki_bridge_token
+#data/bai/?required
+url="http://"+ebusd_host+":"+str(ebusd_port)+"/data/"+ebusd_circuit+"/?required"
 
-    try:
-        raw = requests.get(url, timeout=4)
-    except requests.exceptions.Timeout as e:
-        if debug:
-            print ("BL API:",e)
+try:
+    raw = requests.get(url, timeout=4)
+except requests.exceptions.Timeout as e:
+    if debug:
+        print ("eBUSd HTTP:",e)
 
-    if raw.status_code == requests.codes.ok:
-        if debug:
-            print ("BL API: OK ["+str(raw.status_code)+"]")
-        dsList = raw.json()
-        if debug and showraw:
-            print ("BL RAW:")
-            print (json.dumps(dsList,indent=4))
-    else:
-        if debug:
-            print ("BL API: NOK")
-
-    url="http://"+nuki_bridge_ip+":8080/info&token="+nuki_bridge_token
-    try:
-        raw = requests.get(url, timeout=4)
-    except requests.exceptions.Timeout as e:
-        if debug:
-            print ("BI API:",e)
-
-    if raw.status_code == requests.codes.ok:
-        if debug:
-            print ("BI API: OK ["+str(raw.status_code)+"]")
-        dsInfo = raw.json()
-        if debug and showraw:
-            print ("BI RAW:")
-            print (json.dumps(dsInfo,indent=4))
-    else:
-        if debug:
-            print ("BI API: NOK")
-
-
-    senddata={}
-    senddata["measurement"]="signal"
-    senddata["tags"]={}
-    senddata["tags"]["origin"]="Nuki"
-    senddata["tags"]["source"]="docker nuki-influxdb2"
-    senddata["fields"]={}
-
-    # pass info
-    for key in dsList:
-        name=key['name']
-        nukiID=key['nukiId']
-
-        senddata["tags"]["host"]=name
-
-        for key2 in dsInfo['scanResults']:
-            if key2['nukiId'] == nukiID:
-                rssi=key2['rssi']
-                signal=( rssi + 100 )*2.0
-
-                senddata["fields"]["percent"]=signal
-                senddata["fields"]["rssi"]=rssi
-                write_influxdb()
+if raw.status_code == requests.codes.ok:
+    if debug:
+        print ("eBUSd HTTP: OK ["+str(raw.status_code)+"]")
+    dsList = raw.json()
+    if debug and showraw:
+        print ("eBUSd HTTP:")
+        print (json.dumps(dsList,indent=4))
+else:
+    if debug:
+        print ("eBUSd HTTP: NOK")
 
 
 
+
+senddata={}
+senddata["measurement"]="heating"
+senddata["tags"]={}
+senddata["tags"]["origin"]="eBUSd"
+senddata["tags"]["source"]="docker ebusd-influxdb2"
+senddata["fields"]={}
+
+# pass info
+for key in dsList:
+    name=key['name']
+
+    senddata["tags"]["host"]=name
+
+    if key2['nukiId'] == nukiID:
+        rssi=key2['rssi']
+        signal=( rssi + 100 )*2.0
+
+        senddata["fields"]["percent"]=signal
+        senddata["fields"]["rssi"]=rssi
+        write_influxdb()
+
+
+quit()
 
 # pass smartlock devices
 for key in devList:
