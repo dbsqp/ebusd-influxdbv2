@@ -44,9 +44,9 @@ influxdb2_token=os.getenv('INFLUXDB2_TOKEN', "")
 influxdb2_bucket=os.getenv('INFLUXDB2_BUCKET', "DEV")
 
 # hard encoded envionment varables for testing
-if os.path.exists('private-nuki.py'):
-    print("  incl: private-nuki.py")
-    exec(compile(source=open('private-nuki.py').read(), filename='private-nuki.py', mode='exec'))
+if os.path.exists('private-ebusd.py'):
+    print("  incl: private-ebusd.py")
+    exec(compile(source=open('private-ebusd.py').read(), filename='private-ebusd.py', mode='exec'))
     debug = True
 
 
@@ -72,24 +72,8 @@ def write_influxdb():
     write_api.write(bucket=influxdb2_bucket, org=influxdb2_org, record=[senddata])
 
 
-# test for Nuki Bridge
-if not nuki_bridge_ip and not nuki_bridge_token:
-    nukiBridge = False
-    if debug:
-        print ("bridge: FALSE")
-else:
-    nukiBridge = True
-    if debug:
-        print ("bridge: TRUE ", end='')
-    if pingTest( nuki_bridge_ip ):
-        if debug:
-            print ("ping OK")
-    else:
-        if debug:
-            print ("ping NOK")
 
-
-# get Nuki Bridge API
+# get eBUSd JSON via HTTP interface
 if nukiBridge:
     url="http://"+nuki_bridge_ip+":8080/list&token="+nuki_bridge_token
 
@@ -152,57 +136,6 @@ if nukiBridge:
                 senddata["fields"]["rssi"]=rssi
                 write_influxdb()
 
-
-
-# get Nuki Web API
-baseURL="https://api.nuki.io"
-
-
-pathURL="smartlock"
-url=baseURL+"/"+pathURL
-
-try:
-    devJ = requests.get(url, timeout=4, headers = {"Authorization": "Bearer "+nuki_api_token} )
-except requests.exceptions.Timeout as e:
-    if debug:
-        print ("WD API:",e)
-#   continue
-
-if devJ.status_code == requests.codes.ok:
-    if debug:
-        print ("WD API: OK ["+str(devJ.status_code)+"]")
-    devList = devJ.json()
-    if debug and showraw:
-        print ("WD RAW:")
-        print (json.dumps(devList,indent=4))
-else:
-    if debug:
-        print ("WD API: NOK")
-#   continue
-
-
-pathURL="smartlock/log"
-optionURL="?limit=25"
-url=baseURL+"/"+pathURL+optionURL
-
-try:
-    logJ = requests.get(url, timeout=4, headers = {"Authorization": "Bearer "+nuki_api_token} )
-except requests.exceptions.Timeout as e:
-    if debug:
-        print ("WL API:",e)
-#   continue
-
-if logJ.status_code == requests.codes.ok:
-    if debug:
-        print ("WL API: OK ["+str(logJ.status_code)+"]")
-    logList = logJ.json()
-    if debug and showraw:
-        print ("WL RAW:")
-        print (json.dumps(logList,indent=4))
-else:
-    if debug:
-        print ("WL API: NOK")
-#   continue
 
 
 
