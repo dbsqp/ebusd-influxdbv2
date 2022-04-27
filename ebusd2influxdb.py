@@ -111,18 +111,31 @@ senddata["tags"]["source"]="docker ebusd-influxdb2"
 senddata["fields"]={}
 
 # pass info
-for key in dsList:
-    name=key['name']
+global i
+i = 0
+for key in dsList["bai"]["messages"]:
+    print ( key )
+    name = dsList["bai"]["messages"][key]["name"]
+    time = dsList["bai"]["messages"][key]["lastup"]
+    print ( str(i)+": name = "+name+" time = "+str(time) )
+    for field in dsList["bai"]["messages"][key]["fields"]:
+        print ( dsList["bai"]["messages"][key]["fields"][field] )
 
-    senddata["tags"]["host"]=name
+    #    field=key[i]["fields"]
+    #    value=key[i]["fields"][field]["value"]
 
-    if key2['nukiId'] == nukiID:
-        rssi=key2['rssi']
-        signal=( rssi + 100 )*2.0
+    #print ( "name: "+name+" time= "+time+" field= "+field+" value"+value)
+    i += 1
 
-        senddata["fields"]["percent"]=signal
-        senddata["fields"]["rssi"]=rssi
-        write_influxdb()
+    # senddata["tags"]["host"]=name
+
+    # if key2['nukiId'] == nukiID:
+    #     rssi=key2['rssi']
+    #     signal=( rssi + 100 )*2.0
+
+    #     senddata["fields"]["percent"]=signal
+    #     senddata["fields"]["rssi"]=rssi
+    #     write_influxdb()
 
 
 quit()
