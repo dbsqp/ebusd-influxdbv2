@@ -1,4 +1,4 @@
-# ebusd-influxdbv2 [[Under Developement 🚧]]
+# ebusd-influxdbv2 - Under Developement 🚧
 Docker image to fetch data from eBUSd HTTP interface and push it to an InfluxDBv2 bucket. 
 
 ## eBUSd Setup
