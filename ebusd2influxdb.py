@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # encoding=utf-8
 
 from pytz import timezone
@@ -11,6 +11,8 @@ import sys
 import requests
 import subprocess
 import platform
+import time
+
 
 
 # function ping test
@@ -34,7 +36,13 @@ else:
 # Nuki envionment variables
 ebusd_host=os.getenv('EBUSD_HOST', "localhost")
 ebusd_port=os.getenv('EBUSD_PORT', "")
-ebusd_circuit=os.getenv('EBUSD_CIRCUIT', "")
+ebusd_circuits_str=os.getenv('EBUSD_CIRCUIT_LIST', "[]")
+ebusd_ignoreKeys_str=os.getenv('EBUSD_IGNORE_LIST', "[]")
+ebusd_overideKeys_str=os.getenv('EBUSD_OVERRIDE_LIST', "()")
+
+ebusd_circuits=eval(ebusd_circuits_str)
+ebusd_ignoreKeys=eval(ebusd_ignoreKeys_str)
+ebusd_overideKeys=eval(ebusd_overideKeys_str)
 
 # influxDBv2 envionment variables
 influxdb2_host=os.getenv('INFLUXDB2_HOST', "localhost")
@@ -45,22 +53,23 @@ influxdb2_bucket=os.getenv('INFLUXDB2_BUCKET', "DEV")
 
 # hard encoded envionment varables for testing
 if os.path.exists('private-ebusd.py'):
-    print("  incl: private-ebusd.py")
+    print("   incl: private-ebusd.py")
     exec(compile(source=open('private-ebusd.py').read(), filename='private-ebusd.py', mode='exec'))
-    debug = True
+    debug = False
+    showraw = False
 
 
 # report debug status
 if debug:
-    print ( " debug: TRUE" )
+    print ( "  debug: TRUE" )
 else:
-    print ( " debug: FALSE" )
+    print ( "  debug: FALSE" )
 
 
 # influxDBv2
 influxdb2_url="http://" + influxdb2_host + ":" + str(influxdb2_port)
 if debug:
-    print ( "influx: "+influxdb2_bucket+" at "+influxdb2_url )
+    print ( " influx: "+influxdb2_bucket+" at "+influxdb2_url )
 
 client = InfluxDBClient(url=influxdb2_url, token=influxdb2_token, org=influxdb2_org)
 write_api = client.write_api(write_options=SYNCHRONOUS)
@@ -74,35 +83,17 @@ def write_influxdb():
     
 # test if up
 if pingTest(ebusd_host):
-    print ("ping OK")
+    print ("   ping: OK")
 else:
-    print ("ping NOK")
+    print ("   ping: NOK")
     quit(1)
 
-# get eBUSd JSON via HTTP interface
-#data/bai/?required
-url="http://"+ebusd_host+":"+str(ebusd_port)+"/data/"+ebusd_circuit+"/?required"
 
-try:
-    raw = requests.get(url, timeout=4)
-except requests.exceptions.Timeout as e:
-    if debug:
-        print ("eBUSd HTTP:",e)
-
-if raw.status_code == requests.codes.ok:
-    if debug:
-        print ("eBUSd HTTP: OK ["+str(raw.status_code)+"]")
-    dsList = raw.json()
-    if debug and showraw:
-        print ("eBUSd HTTP:")
-        print (json.dumps(dsList,indent=4))
-else:
-    if debug:
-        print ("eBUSd HTTP: NOK")
+# transpose overrides
+ebusd_keyOverides=[[row[i] for row in ebusd_overideKeys] for i in range(len(ebusd_overideKeys[0]))]
 
 
-
-
+# setup globals
 senddata={}
 senddata["measurement"]="heating"
 senddata["tags"]={}
@@ -110,139 +101,65 @@ senddata["tags"]["origin"]="eBUSd"
 senddata["tags"]["source"]="docker ebusd-influxdb2"
 senddata["fields"]={}
 
-# pass info
-global i
-i = 0
-for key in dsList["bai"]["messages"]:
-    print ( key )
-    name = dsList["bai"]["messages"][key]["name"]
-    time = dsList["bai"]["messages"][key]["lastup"]
-    print ( str(i)+": name = "+name+" time = "+str(time) )
-    for field in dsList["bai"]["messages"][key]["fields"]:
-        print ( dsList["bai"]["messages"][key]["fields"][field] )
 
-    #    field=key[i]["fields"]
-    #    value=key[i]["fields"][field]["value"]
+# for each circuit
+for circuit in ebusd_circuits:
+    print ("\ncircuit:",circuit)
+    senddata["tags"]["circuit"]=circuit
 
-    #print ( "name: "+name+" time= "+time+" field= "+field+" value"+value)
-    i += 1
+    # get JSON via HTTP interface ip:port/data/circuit/?required
+    url="http://"+ebusd_host+":"+str(ebusd_port)+"/data/"+circuit+"/?required"
+    try:
+        raw = requests.get(url, timeout=4)
+    except requests.exceptions.Timeout as e:
+        print ("  eBUSd:",e)
 
-    # senddata["tags"]["host"]=name
-
-    # if key2['nukiId'] == nukiID:
-    #     rssi=key2['rssi']
-    #     signal=( rssi + 100 )*2.0
-
-    #     senddata["fields"]["percent"]=signal
-    #     senddata["fields"]["rssi"]=rssi
-    #     write_influxdb()
-
-
-quit()
-
-# pass smartlock devices
-for key in devList:
-    name=key['name']
-    smartlockID=key['smartlockId']
-    stateID=key['state']['state']
-    triggerID=key['state']['trigger']
-
-    if   triggerID == 0: trigger="proximity"
-    elif triggerID == 1: trigger="manual"
-    elif triggerID == 2: trigger="button"
-    elif triggerID == 3: trigger="automatic"
-    elif triggerID == 6: trigger="continious"
-    else:                trigger="other"
-
-    if key['type'] == 2:
-        if   stateID == 1: state="online"
-        elif stateID == 3: state="ring-to-open"
-        elif stateID == 5: state="open"
-        elif stateID == 7: state="opening"
-        else:              state="other"
+    if raw.status_code == requests.codes.ok:
+        print ("  eBUSd: OK ["+str(raw.status_code)+"]")
+        dList = raw.json()
+        if showraw:
+            print ("  eBUSd:")
+            print (json.dumps(dList,indent=4))
     else:
-        if   stateID == 1: state="locked"
-        elif stateID == 2: state="unlocking"
-        elif stateID == 3: state="unlocked"
-        elif stateID == 4: state="locking"
-        elif stateID == 5: state="unlatched"
-        elif stateID == 6: state="lock-n-go"
-        elif stateID == 7: state="unlatching"
-        else:              state="other"
+        print ("  eBUSd: NOK")
 
-    senddata={}
-    senddata["measurement"]="lock"
-    senddata["tags"]={}
-    senddata["tags"]["origin"]="Nuki"
-    senddata["tags"]["source"]="docker nuki-influxdb2"
-    senddata["tags"]["host"]=name
-    senddata["fields"]={}
-    senddata["fields"]["trigger"]=trigger
-    senddata["fields"]["state"]=state
-    write_influxdb()
-    del senddata["fields"]["trigger"]
-    del senddata["fields"]["state"]
 
-    if key['type'] == 2:
-        if key['state']['batteryCritical'] == "true":
-            battery=10
+    # pass JSON
+    if debug and showraw:
+        print ( "\nPASS JSON\n")
+
+    for key in dList[circuit]['messages']:
+        if key in ebusd_ignoreKeys:
+            print ( " -- IGNORED --",key )
+            continue
+        for key2 in dList[circuit]['messages'][key]:
+            if key2 == "name":
+                name = dList[circuit]['messages'][key]['name']
+                if name in ebusd_keyOverides[0]:
+                    name = ebusd_keyOverides[1][ebusd_keyOverides[0].index(name)]
+                    print ( " -- EDITED --",key,">",name )
+
+            if key2 == "lastup":
+                times = dList[circuit]['messages'][key]['lastup']
+
+            if key2 == 'fields':
+                fields = dList[circuit]['messages'][key]['fields']
+                nFields = len(fields)
+                if nFields == 1:
+                    for field in fields:
+                        value = dList[circuit]['messages'][key]['fields'][field]['value']
+
+        timef = time.strftime("%Y-%m-%dT%H:%M:%S.00%z", time.localtime(times))
+
+        senddata["tags"]['key']=key
+        senddata["time"]=timef
+
+        if nFields == 1:
+            print ( "heating,circuit="+circuit+",key="+key+" "+name+"="+str(value)+" "+str(times) )
+            senddata["fields"][name]=value
+            write_influxdb()
+            del senddata["fields"][name]
         else:
-            battery=100
-        battery=float(round(battery,2))
-        senddata["measurement"]="battery"
-        senddata["fields"]["percent"]=battery
-        write_influxdb()
+            print ( name,times, nFields )
 
-    else:
-        if 'batteryCharge' in key['state']:
-            battery=key['state']['batteryCharge']
-            battery=float(round(battery,2))
-
-            senddata["measurement"]="battery"
-            senddata["fields"]["percent"]=battery
-            write_influxdb()
-
-    if 'percent' in senddata["fields"]:
-        del senddata["fields"]["percent"]
-
-    for logEntry in logList:
-        if logEntry['smartlockId'] == smartlockID:
-            senddata["measurement"]="lock"
-            senddata["time"]=logEntry['date']
-
-            stateID=logEntry['state']
-
-            if logEntry['deviceType'] == 2:
-                if   stateID == 1: state="online"
-                elif stateID == 3: state="ring-to-open"
-                elif stateID == 5: state="open"
-                elif stateID == 7: state="opening"
-                else:              state="other"
-            else:
-                if   stateID == 1: state="locked"
-                elif stateID == 2: state="unlocking"
-                elif stateID == 3: state="unlocked"
-                elif stateID == 4: state="locking"
-                elif stateID == 5: state="unlatched"
-                elif stateID == 6: state="lock-n-go"
-                elif stateID == 7: state="unlatching"
-                else:              state="other"
-
-            triggerID=logEntry['trigger']
-
-            if   triggerID == 0: trigger="proximity"
-            elif triggerID == 1: trigger="manual"
-            elif triggerID == 2: trigger="button"
-            elif triggerID == 3: trigger="automatic"
-            elif triggerID == 6: trigger="continious"
-            else:                trigger="other"
-
-            who=logEntry['name']
-
-            if not who:
-                who="other"
-
-            senddata["tags"]["who"]=who
-            senddata["fields"]["trigger"]=trigger
-            senddata["fields"]["state"]=state
-            write_influxdb()
+quit(0)

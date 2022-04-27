@@ -14,6 +14,7 @@ Docker image to fetch data from eBUSd HTTP interface and push it to an InfluxDBv
 - create container, stop, export json, edit json to add device, import
 6. Test using docker bash terminal using ebusctl:
 - ebusctl info, ebusdctl find
+- note circuit name(s) to be monitored
  
 See eBUSd for more information https://github.com/john30/ebusd.
 
@@ -26,6 +27,9 @@ https://hub.docker.com/repository/docker/dbsqp/ebusd-influxdbv2
 $ docker run -d \
  -e EBUSD_IP="<eBUSd server>" \
  -e EBUSD_PORT="<port>" \
+ -e EBUSD_CIRCUIT_LIST="['<#1>','<#2>',...]" \
+ -e EBUSD_IGNORE_LIST ="['<ignore1>','<ignore2>',...]" \
+ -e EBUSD_OVERRIDE_LIST="[['<old1>','<new1>'],['old2','new2'],...]" \
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
  -e INFLUXDB2_PORT="8086" \
  -e INFLUXDB2_ORG="Home" \
