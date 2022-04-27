@@ -1,38 +1,39 @@
-# nuki-influxdbv2
-Docker image to fetch data from Nuki Web API and push to influxdb v2 bucket.
-https://developer.nuki.io/page/nuki-web-api-1-4/3
+# ebusd-influxdbv2
+Docker image to fetch data from eBUSd HTTP interface and push it to an InfluxDBv2 bucket. 
 
-Optionally also pulls signal strengths from Nuki Bridge on local LAN.
-
-## Nuki Accessories
-1. Go to https://web.nuki.io/
-2. Generate API Token with scope:
-- View devices
-- View activity logs
-3. get API token
-
-Optional
-- Setup token for Nuki Bridge
+## eBUSd Setup
+1. Setup physical connection and interface. The specific interface used was:
+- https://fromeijn.nl/connected-vaillant-to-home-assistant/
+- https://gitlab.com/fromeijn/ebuzzz-adapter
+2. Install USB serial drivers for Synology NAS under DSM 7
+- install, load, setup load at startup script
+2. Setup eBUSd docker container:
+- https://registry.hub.docker.com/r/john30/ebusd/
+- https://github.com/john30/ebusd
+3. Configure docker container to allow access to serial USB device
+- create container, stop, export json, edit json to add device, import
+6. Test using docker bash terminal using ebusctl:
+- ebusctl info, ebusdctl find
+ 
+See eBUSd for more information https://github.com/john30/ebusd.
 
 ## InfluxDBv2 Setup
 Setup InfluxDBv2, create bucket and create a token with write permissions for bucket.
 
 ## Docker Setup
-https://hub.docker.com/repository/docker/dbsqp/nuki-influxdbv2
+https://hub.docker.com/repository/docker/dbsqp/ebusd-influxdbv2
 ```
 $ docker run -d \
- -e NUKI_WEB_API_TOKEN="<web-api-token>" \
- -e NUKI_BRIDGE_IP="<ip-address-of-bridge>" \
- -e NUKI_BRIDGE_TOKEN="<bridge-api-token>" \
+ -e EBUSD_IP="<eBUSd server>" \
+ -e EBUSD_PORT="<port>" \
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
  -e INFLUXDB2_PORT="8086" \
  -e INFLUXDB2_ORG="Home" \
  -e INFLUXDB2_TOKEN="" \
  -e INFLUXDB2_BUCKET="Staging" \
- --name "Influx-Nuki" \
-dbsqp/nuki-influxdbv2:latest
+ --name "Influx-eBUSd" \
+dbsqp/ebusd-influxdbv2:latest
 ```
-Note NUKI_BRIDGE_IP and NUKI_BRIDGE_TOKEN are optional.
 
 ## Debug
 To report out further details in the log enable debug:
