@@ -35,8 +35,8 @@ else:
 
 # Nuki envionment variables
 ebusd_host=os.getenv('EBUSD_HOST', "localhost")
-ebusd_port=os.getenv('EBUSD_PORT', "")
-ebusd_circuits_str=os.getenv('EBUSD_CIRCUIT_LIST', "[]")
+ebusd_port=os.getenv('EBUSD_PORT', "8889")
+ebusd_circuits_str=os.getenv('EBUSD_CIRCUIT_LIST', "")
 ebusd_ignoreKeys_str=os.getenv('EBUSD_IGNORE_LIST', "[]")
 ebusd_overideKeys_str=os.getenv('EBUSD_OVERRIDE_LIST', "()")
 
@@ -111,7 +111,7 @@ for circuit in ebusd_circuits:
     url="http://"+ebusd_host+":"+str(ebusd_port)+"/data/"+circuit+"/?required"
     
     if debug:
-    print ( " url: "+url )
+        print ( " url: "+url )
 
     try:
         raw = requests.get(url, timeout=4)
