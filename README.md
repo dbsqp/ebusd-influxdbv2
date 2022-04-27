@@ -27,13 +27,9 @@ https://hub.docker.com/repository/docker/dbsqp/ebusd-influxdbv2
 $ docker run -d \
  -e EBUSD_IP="<eBUSd server>" \
  -e EBUSD_PORT="<port>" \
-<<<<<<< HEAD
  -e EBUSD_CIRCUIT_LIST="['<#1>','<#2>',...]" \
  -e EBUSD_IGNORE_LIST ="['<ignore1>','<ignore2>',...]" \
  -e EBUSD_OVERRIDE_LIST="[['<old1>','<new1>'],['old2','new2'],...]" \
-=======
- -e EBUSD_CIRCUIT="<circuit>" \
->>>>>>> 85237291884f8a65dc370a15f0a331e402bbb8f6
  -e INFLUXDB2_HOST="<INFLUXDBv2 SERVER>" \
  -e INFLUXDB2_PORT="8086" \
  -e INFLUXDB2_ORG="Home" \
