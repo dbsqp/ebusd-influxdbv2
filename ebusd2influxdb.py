@@ -109,6 +109,10 @@ for circuit in ebusd_circuits:
 
     # get JSON via HTTP interface ip:port/data/circuit/?required
     url="http://"+ebusd_host+":"+str(ebusd_port)+"/data/"+circuit+"/?required"
+    
+    if debug:
+    print ( " url: "+url )
+
     try:
         raw = requests.get(url, timeout=4)
     except requests.exceptions.Timeout as e:
