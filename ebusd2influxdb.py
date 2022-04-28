@@ -36,7 +36,7 @@ else:
 # Nuki envionment variables
 ebusd_host=os.getenv('EBUSD_HOST', "localhost")
 ebusd_port=os.getenv('EBUSD_PORT', "8889")
-ebusd_circuits_str=os.getenv('EBUSD_CIRCUIT_LIST', "")
+ebusd_circuits_str=os.getenv('EBUSD_CIRCUIT_LIST', "[]")
 ebusd_ignoreKeys_str=os.getenv('EBUSD_IGNORE_LIST', "[]")
 ebusd_overideKeys_str=os.getenv('EBUSD_OVERRIDE_LIST', "()")
 
@@ -55,8 +55,6 @@ influxdb2_bucket=os.getenv('INFLUXDB2_BUCKET', "DEV")
 if os.path.exists('private-ebusd.py'):
     print("   incl: private-ebusd.py")
     exec(compile(source=open('private-ebusd.py').read(), filename='private-ebusd.py', mode='exec'))
-    debug = False
-    showraw = False
 
 
 # report debug status
@@ -129,19 +127,26 @@ for circuit in ebusd_circuits:
 
 
     # pass JSON
-    if debug and showraw:
-        print ( "\nPASS JSON\n")
+    if showraw:
+        print ( "\nPassed JSON\n")
 
+    global n, edited
+    n = 0
     for key in dList[circuit]['messages']:
+        edited = False
+
+        print ( str(n).rjust(3,' '),'', end='' )
+
         if key in ebusd_ignoreKeys:
-            print ( " -- IGNORED --",key )
+            print ( "-",key.rjust(30,' ') )
+            n += 1
             continue
         for key2 in dList[circuit]['messages'][key]:
             if key2 == "name":
                 name = dList[circuit]['messages'][key]['name']
                 if name in ebusd_keyOverides[0]:
                     name = ebusd_keyOverides[1][ebusd_keyOverides[0].index(name)]
-                    print ( " -- EDITED --",key,">",name )
+                    edited = True
 
             if key2 == "lastup":
                 times = dList[circuit]['messages'][key]['lastup']
@@ -154,16 +159,23 @@ for circuit in ebusd_circuits:
                         value = dList[circuit]['messages'][key]['fields'][field]['value']
 
         timef = time.strftime("%Y-%m-%dT%H:%M:%S.00%z", time.localtime(times))
+        timev = time.strftime("%a %d %H:%M:%S", time.localtime(times))
 
         senddata["tags"]['key']=key
         senddata["time"]=timef
 
         if nFields == 1:
-            print ( "heating,circuit="+circuit+",key="+key+" "+name+"="+str(value)+" "+str(times) )
+            if not edited:
+                print ( "u "+key.rjust(30,' ')+" = "+str(value).ljust(20,' ')+" "+str(timev) )
+            else:
+                print ( "e "+key.rjust(30,' ')+" > "+name.rjust(10,' ')+" = "+str(value).ljust(7,' ')+" "+str(timev) )
+
             senddata["fields"][name]=value
             write_influxdb()
             del senddata["fields"][name]
         else:
             print ( name,times, nFields )
+
+        n += 1
 
 quit(0)
