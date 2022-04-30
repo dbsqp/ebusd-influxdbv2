@@ -117,7 +117,7 @@ for circuit in ebusd_circuits:
         raw = requests.get(url, timeout=4)
     except requests.exceptions.Timeout as e:
         print ("ER HTTP:",e)
-        quit(1)
+        quit(2)
 
     if raw.status_code == requests.codes.ok:
         print ("   HTTP: OK ["+str(raw.status_code)+"]")
