@@ -10,7 +10,7 @@ do
     echo "Exit status not 0"
     echo "retry in 10 s"
     sleep 10
-  else;
+  else
     date
     echo "Sleep 10 mins"
     sleep 600
