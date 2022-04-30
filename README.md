@@ -44,3 +44,7 @@ To report out further details in the log enable debug:
 ```
  -e DEBUG="TRUE"
 ```
+
+## Todo
+-Pass multi field items.
+

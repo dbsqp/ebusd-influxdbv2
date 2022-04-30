@@ -101,12 +101,14 @@ senddata["fields"]={}
 
 
 # for each circuit
+print ("polling:",ebusd_circuits)
+
 for circuit in ebusd_circuits:
-    print ("\ncircuit:",circuit)
+    print ("circuit:",circuit)
     senddata["tags"]["circuit"]=circuit
 
-    # get JSON via HTTP interface ip:port/data/circuit/?required
-    url="http://"+ebusd_host+":"+str(ebusd_port)+"/data/"+circuit+"/?required"
+    # get JSON via HTTP interface ip:port/data/circuit/?required&maxage=60
+    url="http://"+ebusd_host+":"+str(ebusd_port)+"/data/"+circuit+"/?required&maxage=60"
     
     if debug:
         print ( " url: "+url )
@@ -114,26 +116,29 @@ for circuit in ebusd_circuits:
     try:
         raw = requests.get(url, timeout=4)
     except requests.exceptions.Timeout as e:
-        print ("  eBUSd:",e)
+        print ("ER HTTP:",e)
+        quit(1)
 
     if raw.status_code == requests.codes.ok:
-        print ("  eBUSd: OK ["+str(raw.status_code)+"]")
+        print ("   HTTP: OK ["+str(raw.status_code)+"]")
         dList = raw.json()
         if showraw:
-            print ("  eBUSd:")
+            print ("   HTTP:")
             print (json.dumps(dList,indent=4))
     else:
-        print ("  eBUSd: NOK")
+        print ("ER  HTTP: NOK")
 
 
     # pass JSON
     if showraw:
         print ( "\nPassed JSON\n")
 
-    global n, edited
+    global n, edited, valueList
     n = 0
+
     for key in dList[circuit]['messages']:
         edited = False
+        valueList=[]
 
         print ( str(n).rjust(3,' '),'', end='' )
 
@@ -142,6 +147,15 @@ for circuit in ebusd_circuits:
             n += 1
             continue
         for key2 in dList[circuit]['messages'][key]:
+            if key2 == 'fields':
+                fields = dList[circuit]['messages'][key]['fields']
+                nFields = len(fields)
+                for field in fields:
+                    if nFields == 1:
+                        value = dList[circuit]['messages'][key]['fields'][field]['value']
+                    else:
+                        valueList.append( dList[circuit]['messages'][key]['fields'][field]['value'] )
+
             if key2 == "name":
                 name = dList[circuit]['messages'][key]['name']
                 if name in ebusd_keyOverides[0]:
@@ -151,13 +165,6 @@ for circuit in ebusd_circuits:
             if key2 == "lastup":
                 times = dList[circuit]['messages'][key]['lastup']
 
-            if key2 == 'fields':
-                fields = dList[circuit]['messages'][key]['fields']
-                nFields = len(fields)
-                if nFields == 1:
-                    for field in fields:
-                        value = dList[circuit]['messages'][key]['fields'][field]['value']
-
         timef = time.strftime("%Y-%m-%dT%H:%M:%S.00%z", time.localtime(times))
         timev = time.strftime("%a %d %H:%M:%S", time.localtime(times))
 
@@ -166,15 +173,16 @@ for circuit in ebusd_circuits:
 
         if nFields == 1:
             if not edited:
-                print ( "u "+key.rjust(30,' ')+" = "+str(value).ljust(20,' ')+" "+str(timev) )
+                print ( "u "+key.rjust(30,' ')+" = "+str(value).ljust(20,' ')+" "+str(timev), end='')
             else:
-                print ( "e "+key.rjust(30,' ')+" > "+name.rjust(10,' ')+" = "+str(value).ljust(7,' ')+" "+str(timev) )
+                print ( "e "+key.rjust(30,' ')+" >\n    u "+name.rjust(30,' ')+" = "+str(value).ljust(20,' ')+" "+str(timev), end='')
 
             senddata["fields"][name]=value
             write_influxdb()
             del senddata["fields"][name]
+            print ( " >")
         else:
-            print ( name,times, nFields )
+            print ( "x "+key.rjust(30,' ')+" "+str(nFields)+" "+str(valueList).ljust(20,' ')+" "+str(timev) )
 
         n += 1
 
