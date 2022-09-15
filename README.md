@@ -39,7 +39,12 @@ $ docker run -d \
 dbsqp/ebusd-influxdbv2:latest
 ```
 
-## Debug
+# Options
+```
+ -e INFLUXDB2_SSL="TRUE"
+```
+
+# Debug
 To report out further details in the log enable debug:
 ```
  -e DEBUG="TRUE"
