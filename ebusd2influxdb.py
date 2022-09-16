@@ -83,9 +83,15 @@ else:
     influxdb2_url="http://" + influxdb2_host + ":" + str(influxdb2_port)
     
 if debug:
-    print ( " influx: "+influxdb2_bucket+" at "+influxdb2_url )
+    print ( "   URL"+influxdb2_url+" bucket: "+influxdb2_bucket )
 
-client = InfluxDBClient(url=influxdb2_url, token=influxdb2_token, org=influxdb2_org, verify_ssl=influxdb2_ssl_verify)
+if influxdb2_ssl_verify:
+    print ( "verify: True" )
+    client = InfluxDBClient(url=influxdb2_url, token=influxdb2_token, org=influxdb2_org, verify_ssl=True)
+else:
+    print ( "verify: False" )
+    client = InfluxDBClient(url=influxdb2_url, token=influxdb2_token, org=influxdb2_org, verify_ssl=False)
+    
 write_api = client.write_api(write_options=SYNCHRONOUS)
 
 def write_influxdb():
